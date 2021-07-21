@@ -44,23 +44,64 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Apr 30, 2021 (benjamin): created
+ *   Apr 19, 2021 (benjamin): created
  */
-package org.knime.python3;
+package org.knime.python3.arrow;
+
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.knime.core.columnar.store.BatchReadStore;
+import org.knime.core.table.schema.ColumnarSchema;
 
 /**
- * A provider for data to a Python process.
- *
- * Objects of this interface will be given to methods in the {@link PythonEntryPoint} to provide the Python process with
- * data. On the Python side they should be wrapped into a Python object (which provides a pythonic API) using
- * <code>knime.data.mapDataProvider(data_callback:JavaObject)</code>.
+ * A simple default implementation of the {@link PythonArrowDataSink}. Use {@link PythonArrowDataUtils} to create an
+ * instance and to convert it to a {@link BatchReadStore}.
  *
  * @author Benjamin Wilhelm, KNIME GmbH, Konstanz, Germany
  */
-public interface PythonDataProvider {
+public final class DefaultPythonArrowDataSink implements PythonArrowDataSink {
 
-    /**
-     * @return an unique identifier which will be used to identify the Python class wrapping this callback.
-     */
-    String getIdentifier();
+    private final Path m_path;
+
+    private final List<Long> m_recordBatchOffsets;
+
+    private ColumnarSchema m_schema;
+
+    DefaultPythonArrowDataSink(final Path path) {
+        m_path = path;
+        m_recordBatchOffsets = new ArrayList<>();
+    }
+
+    @Override
+    public String getAbsolutePath() {
+        return m_path.toAbsolutePath().toString();
+    }
+
+    @Override
+    public void reportBatchWritten(final long offset) {
+        m_recordBatchOffsets.add(offset);
+    }
+
+    @Override
+    public void setColumnarSchema(final ColumnarSchema schema) {
+        m_schema = schema;
+    }
+
+    List<Long> getRecordBatchOffsets() {
+        return m_recordBatchOffsets;
+    }
+
+    ColumnarSchema getSchema() {
+        if (m_schema == null) {
+            throw new IllegalStateException(
+                "Cannot get the schema before it has been set. This is an implementation error.");
+        }
+        return m_schema;
+    }
+
+    Path getPath() {
+        return m_path;
+    }
 }

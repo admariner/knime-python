@@ -48,60 +48,38 @@
  */
 package org.knime.python3.arrow;
 
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.knime.core.columnar.store.BatchReadStore;
 import org.knime.core.table.schema.ColumnarSchema;
+import org.knime.python3.PythonDataSink;
 
 /**
- * A simple default implementation of the {@link PythonArrowDataCallback}. Use {@link PythonArrowDataUtils} to create an
- * instance and to convert it to a {@link BatchReadStore}.
+ * A sink for Arrow data from a Python process.
  *
  * @author Benjamin Wilhelm, KNIME GmbH, Konstanz, Germany
  */
-public final class DefaultPythonArrowDataCallback implements PythonArrowDataCallback {
-
-    private final Path m_path;
-
-    private final List<Long> m_recordBatchOffsets;
-
-    private ColumnarSchema m_schema;
-
-    DefaultPythonArrowDataCallback(final Path path) {
-        m_path = path;
-        m_recordBatchOffsets = new ArrayList<>();
-    }
+public interface PythonArrowDataSink extends PythonDataSink {
 
     @Override
-    public String getAbsolutePath() {
-        return m_path.toAbsolutePath().toString();
+    default String getIdentifier() {
+        return "org.knime.python3.arrow";
     }
 
-    @Override
-    public void reportBatchWritten(final long offset) {
-        m_recordBatchOffsets.add(offset);
-    }
+    /**
+     * @return the path the output file should be written to.
+     */
+    String getAbsolutePath();
 
-    @Override
-    public void setColumnarSchema(final ColumnarSchema schema) {
-        m_schema = schema;
-    }
+    /**
+     * Report that the next batch has been written to the file. Must be called by Python each time a new batch was
+     * written. Must be called for each batch in ascending order.
+     *
+     * @param offset the offset of the batch
+     */
+    void reportBatchWritten(long offset); // TODO(dictionary) add offsets for dictionary batches
 
-    List<Long> getRecordBatchOffsets() {
-        return m_recordBatchOffsets;
-    }
-
-    ColumnarSchema getSchema() {
-        if (m_schema == null) {
-            throw new IllegalStateException(
-                "Cannot get the schema before it has been set. This is an implementation error.");
-        }
-        return m_schema;
-    }
-
-    Path getPath() {
-        return m_path;
-    }
+    /**
+     * TODO(extensiontypes) this should be replaced with something that uses virtual types/extension types
+     *
+     * @param schema the schema of the data that is written to the file
+     */
+    void setColumnarSchema(ColumnarSchema schema);
 }

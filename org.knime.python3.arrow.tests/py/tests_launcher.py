@@ -51,8 +51,8 @@ import datetime
 import numpy as np
 import pyarrow as pa
 
-import knime
-import knime_arrow
+import knime_gateway as kg
+import knime_arrow as ka
 
 FLOAT_COMPARISON_EPSILON = 1e-6
 DOUBLE_COMPARISON_EPSILON = 1e-12
@@ -105,9 +105,9 @@ NUM_BATCHES = 3
 #     LocalDateType(), column0)
 
 
-class EntryPoint(knime.client.EntryPoint):
+class EntryPoint(kg.EntryPoint):
 
-    def testTypeToPython(self, data_type, data_provider):
+    def testTypeToPython(self, data_type, data_source):
 
         # Helper functions
         def assert_row_value(row, batch, expected, value):
@@ -260,12 +260,12 @@ class EntryPoint(knime.client.EntryPoint):
                     check_value(r, b, v)
 
         # Loop over batches and check each value
-        with knime.data.mapDataProvider(data_provider) as data:
-            for b in range(len(data)):
-                batch = data[b]
+        with kg.map_data_source(data_source) as source:
+            for b in range(len(source)):
+                batch = source[b]
                 check_batch(batch, b)
 
-    def testTypeFromPython(self, data_type, data_callback):
+    def testTypeFromPython(self, data_type, data_sink):
 
         # Writers for different types
         if data_type == 'boolean':
@@ -383,19 +383,19 @@ class EntryPoint(knime.client.EntryPoint):
             raise ValueError("Unknown type to check: '{}'.".format(data_type))
 
         # Create the data and write
-        with knime.data.mapDataCallback(data_callback) as writer:
+        with kg.map_data_sink(data_sink) as sink:
             mask = np.array([r % 13 == 0 for r in range(NUM_ROWS)])
             for b in range(NUM_BATCHES):
                 data = pa.array([get_value(b, r) for r in range(NUM_ROWS)],
                                 type=arrow_type, mask=mask)
                 record_batch = pa.record_batch([data], ['0'])
-                writer.write(record_batch)
+                sink.write(record_batch)
 
-    def testExpectedSchema(self, data_callback):
+    def testExpectedSchema(self, data_sink):
         num_batches = 2
         num_rows = 5
 
-        with knime.data.mapDataCallback(data_callback) as writer:
+        with kg.map_data_sink(data_sink) as sink:
 
             for b in range(num_batches):
                 int_data = pa.array(
@@ -414,18 +414,18 @@ class EntryPoint(knime.client.EntryPoint):
                 )
                 batch = pa.record_batch(
                     [int_data, string_data, struct_data], ['0', '1', '2'])
-                writer.write(batch)
+                sink.write(batch)
 
-    def testMultipleInputsOutputs(self, data_providers, data_callbacks):
-        inputs = knime.data.mapDataProviders(data_providers)
-        outputs = knime.data.mapDataCallbacks(data_callbacks)
+    def testMultipleInputsOutputs(self, data_sources, data_sinks):
+        inputs = kg.map_data_source(data_sources)
+        outputs = kg.map_data_sink(data_sinks)
 
         # Check the values in the inputs
         assert len(inputs) == 4
         for idx, inp in enumerate(inputs):
             if idx == 2:
                 assert isinstance(
-                    inp._reader, knime_arrow._OffsetBasedRecordBatchFileReader)
+                    inp._reader, ka._OffsetBasedRecordBatchFileReader)
             else:
                 assert isinstance(inp._reader, pa.RecordBatchFileReader)
             assert len(inp) == 1
@@ -448,4 +448,4 @@ class EntryPoint(knime.client.EntryPoint):
         implements = ["org.knime.python3.arrow.TestUtils.ArrowTestEntryPoint"]
 
 
-knime.client.connectToJava(EntryPoint())
+kg.connect_to_knime(EntryPoint())

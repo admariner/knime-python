@@ -49,18 +49,20 @@
 package org.knime.python3;
 
 /**
- * A callback to which a Python process can report data that has been created by the Python process.
+ * A sink to which a Python process can report data that has been created by the Python process.
  *
  * Objects of this interface will be given to methods in the {@link PythonEntryPoint} to provide the Python process with
  * a way to report back the data computed. On the Python side they should be wrapped into a Python object (which
- * provides a pythonic API) using <code>knime.data.mapDataCallback(data_callback:JavaObject)</code>.
+ * provides a pythonic API) using <code>knime_gateway.map_data_sink(java_data_sink:JavaObject)</code>.
+ *
+ * TODO(benjamin) update Python code example
  *
  * @author Benjamin Wilhelm, KNIME GmbH, Konstanz, Germany
  */
-public interface PythonDataCallback {
+public interface PythonDataSink {
 
     /**
-     * @return an unique identifier which will be used to identify the Python class wrapping this callback.
+     * @return an unique identifier which will be used to identify the Python class wrapping this data sink.
      */
     String getIdentifier();
 }
