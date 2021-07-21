@@ -108,7 +108,6 @@ NUM_BATCHES = 3
 class EntryPoint(knime.client.EntryPoint):
 
     def testTypeToPython(self, data_type, data_provider):
-        data = knime.data.mapDataProvider(data_provider)
 
         # Helper functions
         def assert_row_value(row, batch, expected, value):
@@ -261,13 +260,12 @@ class EntryPoint(knime.client.EntryPoint):
                     check_value(r, b, v)
 
         # Loop over batches and check each value
-        for b in range(len(data)):
-            batch = data[b]
-            check_batch(batch, b)
-        data.close()
+        with knime.data.mapDataProvider(data_provider) as data:
+            for b in range(len(data)):
+                batch = data[b]
+                check_batch(batch, b)
 
     def testTypeFromPython(self, data_type, data_callback):
-        writer = knime.data.mapDataCallback(data_callback)
 
         # Writers for different types
         if data_type == 'boolean':
@@ -385,41 +383,38 @@ class EntryPoint(knime.client.EntryPoint):
             raise ValueError("Unknown type to check: '{}'.".format(data_type))
 
         # Create the data and write
-        mask = np.array([r % 13 == 0 for r in range(NUM_ROWS)])
-        for b in range(NUM_BATCHES):
-            data = pa.array([get_value(b, r) for r in range(NUM_ROWS)],
-                            type=arrow_type, mask=mask)
-            record_batch = pa.record_batch([data], ['0'])
-            writer.write(record_batch)
-
-        writer.close()
+        with knime.data.mapDataCallback(data_callback) as writer:
+            mask = np.array([r % 13 == 0 for r in range(NUM_ROWS)])
+            for b in range(NUM_BATCHES):
+                data = pa.array([get_value(b, r) for r in range(NUM_ROWS)],
+                                type=arrow_type, mask=mask)
+                record_batch = pa.record_batch([data], ['0'])
+                writer.write(record_batch)
 
     def testExpectedSchema(self, data_callback):
         num_batches = 2
         num_rows = 5
 
-        writer = knime.data.mapDataCallback(data_callback)
+        with knime.data.mapDataCallback(data_callback) as writer:
 
-        for b in range(num_batches):
-            intData = pa.array(
-                [i + b for i in range(num_rows)],
-                type=pa.int32())
-            stringData = pa.array(
-                ["{},{}".format(i, b) for i in range(num_rows)],
-                type=pa.string())
-            structData = pa.array(
-                [{'0': [x for x in range(i % 3)], '1': i * 0.1}
-                 for i in range(num_rows)],
-                type=pa.struct([
-                    pa.field('0', type=pa.list_(pa.int32())),
-                    pa.field('1', type=pa.float64())
-                ])
-            )
-            batch = pa.record_batch(
-                [intData, stringData, structData], ['0', '1', '2'])
-            writer.write(batch)
-
-        writer.close()
+            for b in range(num_batches):
+                int_data = pa.array(
+                    [i + b for i in range(num_rows)],
+                    type=pa.int32())
+                string_data = pa.array(
+                    ["{},{}".format(i, b) for i in range(num_rows)],
+                    type=pa.string())
+                struct_data = pa.array(
+                    [{'0': [x for x in range(i % 3)], '1': i * 0.1}
+                     for i in range(num_rows)],
+                    type=pa.struct([
+                        pa.field('0', type=pa.list_(pa.int32())),
+                        pa.field('1', type=pa.float64())
+                    ])
+                )
+                batch = pa.record_batch(
+                    [int_data, string_data, struct_data], ['0', '1', '2'])
+                writer.write(batch)
 
     def testMultipleInputsOutputs(self, data_providers, data_callbacks):
         inputs = knime.data.mapDataProviders(data_providers)

@@ -50,32 +50,24 @@ DATA_PROVIDERS = {}
 DATA_CALLBACKS = {}
 
 
-def registerDataProvider(identifier: str, mapper):
-    """Register a mapper which maps Java objects providing data to Python objects with an
-        pythonic API.
-
-    Args:
-        identifier: The identifier of the data provider. Will be compared to the return value
-            of `getIdentifier` on the Java object.
-        mapper: A function taking the Java object as an argument and returning a Python object
-            which provides the data in with a Pythonic API.
-    """
-    DATA_PROVIDERS[identifier] = mapper
+def provider(identifier: str):
+    # TODO docstring
+    def f(mapper):
+        DATA_PROVIDERS[identifier] = mapper
+        return mapper
+    return f
 
 
-def registerDataCallback(identifier: str, mapper):
-    """Register a mapper which maps Java objects getting data from Python with an pythonic API.
-
-    Args:
-        identifier: The identifier of the data provider. Will be compared to the return value
-            of `getIdentifier` on the Java object.
-        mapper: A function taking the Java object as an argument and returning a Python object
-            which accepts data with a Pythonic API.
-    """
-    DATA_CALLBACKS[identifier] = mapper
+def callback(identifier: str):
+    # TODO docstring
+    def f(mapper):
+        DATA_CALLBACKS[identifier] = mapper
+        return mapper
+    return f
 
 
 def mapDataProvider(data_provider):
+    # TODO update docstring
     """Map a Java object which provides data to an Python object which gives access to the data
         using a Pythonic API.
 
@@ -99,6 +91,7 @@ def mapDataProvider(data_provider):
 
 
 def mapDataCallback(data_callback):
+    # TODO update docstring
     """Map a Java object which collects data to a Python object with an Pythonic API.
 
     There must be a mapper registerd for the type of data provider that is given using

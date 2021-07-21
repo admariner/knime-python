@@ -52,8 +52,10 @@ import importlib
 
 from py4j.clientserver import ClientServer, JavaParameters, PythonParameters
 
+client_server = None
 
-class EntryPoint(object):
+
+class EntryPoint:
     """The base class for all entry points.
 
     Methods in this class and subclasses are called by a Java process and are therefore

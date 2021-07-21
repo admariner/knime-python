@@ -46,6 +46,7 @@
 @author Benjamin Wilhelm, KNIME GmbH, Konstanz, Germany
 """
 
+from typing import Type
 import pyarrow as pa
 
 import knime
@@ -125,7 +126,7 @@ def convert_type(arrow_type: pa.DataType):
     raise ValueError("Unsupported Arrow type: '{}'.".format(arrow_type))
 
 
-class _OffsetBasedRecordBatchFileReader(object):
+class _OffsetBasedRecordBatchFileReader:
 
     def __init__(self, source: pa.MemoryMappedFile, data_provider) -> None:
         self._source = source
@@ -148,17 +149,17 @@ class _OffsetBasedRecordBatchFileReader(object):
         return pa.ipc.read_record_batch(self._source, self.schema)
 
 
-class Data(object):
+@knime.data.provider("org.knime.python3.arrow")
+class Data:
     """A view on KNIME table data in an Arrow file.
 
     Note that __getitem__ memory-maps the data from disk each time and does not cache the data.
     """
     # TODO rename
-    # TODO should we reproduce the reading API of pyarrow.Table???
-    # TODO context manager?
+    # TODO(benjamin) Do I want to enforce the usage of a context manager?
+    # TODO(benjamin) Context manager for lists of data providers
 
     def __init__(self, data_provider) -> None:
-        # self._data_provider = data_provider
         self._file: pa.MemoryMappedFile = pa.memory_map(
             data_provider.getAbsolutePath())
 
@@ -168,15 +169,33 @@ class Data(object):
             self._reader = _OffsetBasedRecordBatchFileReader(
                 self._file, data_provider)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+        return False
+
     @property
     def schema(self) -> pa.Schema:
         return self._reader.schema
 
     def __len__(self) -> int:
-        # TODO: The number of batches can change (is this okay?)
         return self._reader.num_record_batches
 
     def __getitem__(self, index: int) -> pa.RecordBatch:
+        # The type of index must be int
+        if not isinstance(index, int):
+            raise TypeError(
+                "index must be an integer, not {}".format(type(index).__name__))
+
+        # Wrap negative indices and check if the index is valid
+        length = len(self)
+        if index < 0:
+            index = index + length
+        if index < 0 or index >= length:
+            raise IndexError("index out of range")
+
         # TODO do we need to map columns somehow (in Java we have the factory versions)
         return self._reader.get_batch(index)
 
@@ -190,16 +209,23 @@ class Data(object):
         raise NotImplementedError()
 
 
-class DataWriter(object):
+@knime.data.callback("org.knime.python3.arrow")
+class DataWriter:
     """A class writing record batches to a file to be read by KNIME.
     """
-    # TODO context manager?
 
     def __init__(self, data_callback) -> None:
         self._callback = data_callback  # A callback to tell KNIME what is already written
 
         # Open the file
         self._file = pa.OSFile(data_callback.getAbsolutePath(), mode="wb")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+        return False
 
     def write(self, b: pa.RecordBatch):
         if not hasattr(self, '_writer'):
@@ -232,8 +258,3 @@ class DataWriter(object):
 
     def close(self):
         self._writer.close()
-
-
-# Register the data provider and data callback
-knime.data.registerDataProvider("org.knime.python3.arrow", Data)
-knime.data.registerDataCallback("org.knime.python3.arrow", DataWriter)
