@@ -53,6 +53,10 @@ ARROW_FACTORY_VERSIONS_KEY = "KNIME:basic:factoryVersions"
 
 
 def gateway():
+    if kg.client_server is None:
+        raise RuntimeError(
+            "A connection to KNIME must be established before using a knime_arrow source or sink."
+        )
     return kg.client_server
 
 
