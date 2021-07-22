@@ -341,28 +341,6 @@ public final class OldPythonKernelBackend implements PythonKernelBackend {
         }
     }
 
-    /**
-     * Creates a new Python kernel by starting a Python process and connecting to it.
-     * <P>
-     * Important: Call the {@link #close()} method when this kernel is no longer needed to shut down the Python process
-     * in the background.
-     *
-     * @param kernelOptions The {@link PythonKernelOptions} according to which this kernel instance is configured.
-     * @throws PythonInstallationTestException See {@link #PythonKernel(PythonCommand)} and
-     *             {@link #setOptions(PythonKernelOptions)}.
-     * @throws PythonIOException See {@link #PythonKernel(PythonCommand)} and {@link #setOptions(PythonKernelOptions)}.
-     * @deprecated Use {@link #PythonKernel(PythonCommand)} followed by {@link #setOptions(PythonKernelOptions)}
-     *             instead. The latter ignores the deprecated Python version and command entries of
-     *             {@link PythonKernelOptions}
-     */
-    @Deprecated
-    public OldPythonKernelBackend(final PythonKernelOptions kernelOptions) throws PythonIOException {
-        this(kernelOptions.getUsePython3() //
-            ? kernelOptions.getPython3Command() //
-            : kernelOptions.getPython2Command());
-        setOptions(kernelOptions);
-    }
-
     // Initial setup methods:
 
     private Future<Socket> setupSocket() {

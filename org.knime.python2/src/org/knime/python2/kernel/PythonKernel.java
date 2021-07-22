@@ -95,13 +95,33 @@ public class PythonKernel implements AutoCloseable {
 
     private final PythonKernelBackend m_delegate;
 
+    /**
+     * @see OldPythonKernelBackend#OldPythonKernelBackend(PythonCommand)
+     */
     public PythonKernel(final PythonCommand command) throws PythonIOException {
         m_delegate = new OldPythonKernelBackend(command);
     }
 
+    /**
+     * Creates a new Python kernel by starting a Python process and connecting to it.
+     * <P>
+     * Important: Call the {@link #close()} method when this kernel is no longer needed to shut down the Python process
+     * in the background.
+     *
+     * @param kernelOptions The {@link PythonKernelOptions} according to which this kernel instance is configured.
+     * @throws PythonInstallationTestException See {@link #PythonKernel(PythonCommand)} and
+     *             {@link #setOptions(PythonKernelOptions)}.
+     * @throws PythonIOException See {@link #PythonKernel(PythonCommand)} and {@link #setOptions(PythonKernelOptions)}.
+     * @deprecated Use {@link #PythonKernel(PythonCommand)} followed by {@link #setOptions(PythonKernelOptions)}
+     *             instead. The latter ignores the deprecated Python version and command entries of
+     *             {@link PythonKernelOptions}
+     */
     @Deprecated
     public PythonKernel(final PythonKernelOptions kernelOptions) throws PythonIOException {
-        m_delegate = new OldPythonKernelBackend(kernelOptions);
+        this(kernelOptions.getUsePython3() //
+            ? kernelOptions.getPython3Command() //
+            : kernelOptions.getPython2Command());
+        setOptions(kernelOptions);
     }
 
     /**
