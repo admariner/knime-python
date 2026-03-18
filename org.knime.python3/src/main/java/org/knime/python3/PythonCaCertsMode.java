@@ -73,20 +73,20 @@ import org.knime.core.util.PathUtils;
  * Controls how the the CAs that Python trusts when using SSL are determined. The mode can be set via the system
  * property {@code knime.python.cacerts} which can be set to either {@link PythonCaCertsMode#ENV} to trust the CAs of
  * the Python environment or {@link PythonCaCertsMode#AP} to trust the CAs that the AP trusts. The property match is
- * done case-insensitive and defaults to ENV, also if the property isn't set at all.
+ * done case-insensitive and defaults to AP, also if the property isn't set at all.
  *
  * @author Adrian Nembach, KNIME GmbH, Konstanz, Germany
  */
 @SuppressWarnings("javadoc")
 enum PythonCaCertsMode {
         /**
-         * Trust the CAs of the Python environment. This is the default behavior.
+         * Trust the CAs of the Python environment.
          */
         ENV(e -> {
             // leave as is
         }),
         /**
-         * Trust the CAs that the AP trusts. Creates a .crt file with the CAs that Java trusts and points the
+         * Trust the CAs that the AP trusts. This is the default behavior. Creates a .crt file with the CAs that Java trusts and points the
          * following environment variables to it:
          * <ul>
          * <li>{@code REQUESTS_CA_BUNDLE}: Respected by requests, httpx and packages that use them.
@@ -107,11 +107,11 @@ enum PythonCaCertsMode {
     private static final Set<String> CA_CERT_ENV_VARS = Set.of("REQUESTS_CA_BUNDLE", "SSL_CERT_FILE");
 
     static PythonCaCertsMode fromProperty() {
-        var property = System.getProperty(PYTHON_CACERTS_PROPERTY, PythonCaCertsMode.ENV.name());
-        if (AP.name().equalsIgnoreCase(property)) {
-            return AP;
+        var property = System.getProperty(PYTHON_CACERTS_PROPERTY, PythonCaCertsMode.AP.name());
+        if (ENV.name().equalsIgnoreCase(property)) {
+            return ENV;
         }
-        return ENV;
+        return AP;
     }
 
     void updateEnvironment(final Map<String, String> environment) {
