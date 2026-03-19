@@ -95,6 +95,8 @@ enum PythonCaCertsMode {
          */
         AP(PythonCaCertsMode::overwriteWithAPCerts);
 
+    private static final NodeLogger LOGGER = NodeLogger.getLogger(PythonCaCertsMode.class);
+
     private final Consumer<Map<String, String>> m_envModifier;
 
     PythonCaCertsMode(final Consumer<Map<String, String>> envModifier) {
@@ -107,10 +109,22 @@ enum PythonCaCertsMode {
     private static final Set<String> CA_CERT_ENV_VARS = Set.of("REQUESTS_CA_BUNDLE", "SSL_CERT_FILE");
 
     static PythonCaCertsMode fromProperty() {
-        var property = System.getProperty(PYTHON_CACERTS_PROPERTY, PythonCaCertsMode.AP.name());
+        final String property = System.getProperty(PYTHON_CACERTS_PROPERTY);
+        if (property == null) {
+            // property not set: default to AP
+            return AP;
+        }
+        if (AP.name().equalsIgnoreCase(property)) {
+            return AP;
+        }
         if (ENV.name().equalsIgnoreCase(property)) {
             return ENV;
         }
+        LOGGER.warnWithFormat(
+            "Invalid value '%s' for system property '%s'. Falling back to '%s'.",
+            property,
+            PYTHON_CACERTS_PROPERTY,
+            AP.name());
         return AP;
     }
 
