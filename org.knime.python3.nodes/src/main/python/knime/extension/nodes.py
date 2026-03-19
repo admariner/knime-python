@@ -951,7 +951,8 @@ class PythonNode(ABC):
             Either a single spec, or a tuple or list of specs. The number of specs
             must match the number of defined output ports, and they must be returned in this order.
             Alternatively, instead of a spec, a knext.Column can be returned (if the spec shall
-            only consist of one column).
+            only consist of one column). Return `knext.InactivePort` for an output slot to
+            mark that port inactive.
 
         Raises
         ------
@@ -980,7 +981,8 @@ class PythonNode(ABC):
             The number of output objects must match the number of defined output ports,
             and they must be returned in this order.
             Tables must be provided as a `kn.Table` or `kn.BatchOutputTable`, while binary data
-            should be returned as plain Python `bytes` object.
+            should be returned as plain Python `bytes` object. Return `knext.InactivePort`
+            for an output slot to mark that port inactive.
         """
         pass
 
@@ -1323,6 +1325,21 @@ class WorkflowExecutionError(RuntimeError):
 
     def __init__(self, message) -> None:
         super().__init__(message)
+
+
+class _InactivePort:
+    """
+    Singleton marker for inactive output ports.
+
+    Return `knext.InactivePort` from `configure()` or `execute()` for an output slot to
+    mark the corresponding port inactive instead of producing an empty port object.
+    """
+
+    def __repr__(self) -> str:
+        return "InactivePort"
+
+
+InactivePort = _InactivePort()
 
 
 def _unwrap_results(func: Callable) -> Callable:

@@ -68,6 +68,8 @@ import org.knime.core.node.port.AbstractSimplePortObjectSpec.AbstractSimplePortO
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
+import org.knime.core.node.port.inactive.InactiveBranchPortObject;
+import org.knime.core.node.port.inactive.InactiveBranchPortObjectSpec;
 import org.knime.core.node.port.image.ImagePortObject;
 import org.knime.core.node.port.image.ImagePortObjectSpec;
 import org.knime.credentials.base.Credential;
@@ -187,6 +189,28 @@ public final class PythonPortObjects {
          * @return the wrapped port object
          */
         PortObject getPortObject();
+    }
+
+    /**
+     * {@link PythonPortObject} specialization representing an inactive output.
+     */
+    public static final class PythonInactivePortObject implements PythonPortObject {
+
+        public static final PythonInactivePortObject INSTANCE = new PythonInactivePortObject();
+
+        private PythonInactivePortObject() {
+            // singleton
+        }
+
+        @Override
+        public String getJavaClassName() {
+            return InactiveBranchPortObject.class.getName();
+        }
+
+        @Override
+        public String toString() {
+            return "PythonInactivePortObject";
+        }
     }
 
     /**
@@ -505,6 +529,33 @@ public final class PythonPortObjects {
          * @return the wrapped port object
          */
         PortObjectSpec getPortObjectSpec();
+    }
+
+    /**
+     * {@link PythonPortObjectSpec} specialization representing an inactive output spec.
+     */
+    public static final class PythonInactivePortObjectSpec implements PythonPortObjectSpec {
+
+        public static final PythonInactivePortObjectSpec INSTANCE = new PythonInactivePortObjectSpec();
+
+        private PythonInactivePortObjectSpec() {
+            // singleton
+        }
+
+        @Override
+        public String getJavaClassName() {
+            return InactiveBranchPortObjectSpec.class.getName();
+        }
+
+        @Override
+        public String toJsonString() {
+            return "{}";
+        }
+
+        @Override
+        public String toString() {
+            return "PythonInactivePortObjectSpec";
+        }
     }
 
     /**

@@ -239,6 +239,12 @@ class _WorkflowExecutionWarningConsumer:
 
 
 _bdt_java_type = "org.knime.core.node.BufferedDataTable"
+_inactive_branch_port_object_java_type = (
+    "org.knime.core.node.port.inactive.InactiveBranchPortObject"
+)
+_inactive_branch_port_object_spec_java_type = (
+    "org.knime.core.node.port.inactive.InactiveBranchPortObjectSpec"
+)
 
 
 class _PythonWorkflowPortObject:
@@ -619,6 +625,8 @@ class _PortTypeRegistry:
         if spec is None:
             return None
         class_name = spec.getJavaClassName()
+        if class_name == _inactive_branch_port_object_spec_java_type:
+            return kn.InactivePort
         if self._extension_port_type_registry.can_decode_spec(class_name):
             return self._extension_port_type_registry.decode_spec(
                 spec,
@@ -729,6 +737,11 @@ class _PortTypeRegistry:
     def spec_from_python(
         self, spec, port: kn.Port, node_id: str, port_idx: int
     ) -> _PythonPortObjectSpec:
+        if spec is kn.InactivePort:
+            return _PythonPortObjectSpec(
+                _inactive_branch_port_object_spec_java_type, {}
+            )
+
         if self._extension_port_type_registry.can_encode_spec(spec):
             return self._extension_port_type_registry.encode_spec(spec)
 
@@ -781,6 +794,8 @@ class _PortTypeRegistry:
         self, port_object: _PythonPortObject, port: kn.Port, java_callback
     ):
         class_name = port_object.getJavaClassName()
+        if class_name == _inactive_branch_port_object_java_type:
+            return kn.InactivePort
 
         if self._extension_port_type_registry.can_decode_port_object(class_name):
             return self._extension_port_type_registry.decode_port_object(port_object)
@@ -866,6 +881,9 @@ class _PortTypeRegistry:
         _PythonImagePortObject,
         _PythonCredentialPortObject,
     ]:
+        if obj is kn.InactivePort:
+            return _PythonPortObject(_inactive_branch_port_object_java_type)
+
         if self._extension_port_type_registry.can_encode_port_object(obj):
             return self._extension_port_type_registry.encode_port_object(obj)
 

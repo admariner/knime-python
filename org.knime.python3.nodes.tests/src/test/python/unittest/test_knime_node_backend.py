@@ -1,4 +1,5 @@
 import unittest
+from contextlib import contextmanager
 
 import _node_backend_launcher as knb
 from _ports import JavaPortTypeRegistry
@@ -436,6 +437,189 @@ class PortTypeRegistryTest(unittest.TestCase):
         self.assertEqual("furball", obj.data)
         self.assertEqual("badabummm", obj.spec.data)
         self.assertEqual("this data is not serialized", obj._transient_data)
+
+    def test_inactive_spec_from_python(self):
+        port = knext.Port(knext.PortType.TABLE, "Test port", "Test port")
+        pypos = self.registry.spec_from_python(knext.InactivePort, port, "NodeId", 0)
+        self.assertEqual(
+            "org.knime.core.node.port.inactive.InactiveBranchPortObjectSpec",
+            pypos.getJavaClassName(),
+        )
+
+    def test_inactive_spec_to_python(self):
+        port = knext.Port(knext.PortType.TABLE, "Test port", "Test port")
+        java_spec = knb._PythonPortObjectSpec(
+            "org.knime.core.node.port.inactive.InactiveBranchPortObjectSpec", {}
+        )
+        self.assertIs(
+            knext.InactivePort,
+            self.registry.spec_to_python(java_spec, port, callback_mock),
+        )
+
+    def test_inactive_object_from_python(self):
+        port = knext.Port(knext.PortType.TABLE, "Test port", "Test port")
+        out = self.registry.port_object_from_python(
+            knext.InactivePort, None, port, "nodeID", 0
+        )
+        self.assertEqual(
+            "org.knime.core.node.port.inactive.InactiveBranchPortObject",
+            out.getJavaClassName(),
+        )
+
+    def test_inactive_object_to_python(self):
+        port = knext.Port(knext.PortType.TABLE, "Test port", "Test port")
+        java_obj = self.MockFromJavaObject(
+            spec=None,
+            file_path="unused",
+            class_name="org.knime.core.node.port.inactive.InactiveBranchPortObject",
+        )
+        self.assertIs(
+            knext.InactivePort,
+            self.registry.port_object_to_python(java_obj, port, callback_mock),
+        )
+
+
+class InactivePortProxyTest(unittest.TestCase):
+    @kn.node("Inactive output node", kn.NodeType.OTHER, "", "")
+    @kn.output_binary("Primary output", "Primary binary output.", id="primary")
+    @kn.output_binary_group(
+        "Secondary outputs", "Secondary binary outputs.", id="secondary"
+    )
+    class NodeWithInactiveOutputs:
+        def configure(self, ctx):
+            return (
+                knext.BinaryPortObjectSpec("primary"),
+                [kn.InactivePort, knext.BinaryPortObjectSpec("secondary")],
+            )
+
+        def execute(self, ctx):
+            return (
+                b"primary-output",
+                [kn.InactivePort, b"secondary-output"],
+            )
+
+    class MockJavaConfigContext:
+        def get_input_port_map(self):
+            return {}
+
+        def get_node_id(self):
+            return "0:1"
+
+    class MockJavaExecContext(MockJavaConfigContext):
+        def is_canceled(self):
+            return False
+
+    class _MockFileStore:
+        def __init__(self, file_path: str) -> None:
+            self._file_path = file_path
+
+        def get_key(self):
+            return self._file_path
+
+        def get_file_path(self):
+            return self._file_path
+
+    class MockJavaCallback:
+        def __init__(self) -> None:
+            self._created_files = []
+
+        def get_flow_variables(self):
+            return {}
+
+        def set_flow_variables(self, flow_variables):
+            pass
+
+        def log(self, msg, sev):
+            pass
+
+        def set_failure(self, message, details, invalid_settings):
+            raise AssertionError(message)
+
+        def create_filestore_file(self):
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                self._created_files.append(tmp.name)
+            return InactivePortProxyTest._MockFileStore(tmp.name)
+
+        def cleanup(self):
+            for file_path in self._created_files:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+
+    @contextmanager
+    def _monkey_patch_java_helpers(self):
+        original_to_java_list = knb._to_java_list
+        original_create_linked_hashmap = knb._create_linked_hashmap
+        knb._to_java_list = lambda list_: list_
+        knb._create_linked_hashmap = lambda: {}
+        try:
+            yield
+        finally:
+            knb._to_java_list = original_to_java_list
+            knb._create_linked_hashmap = original_create_linked_hashmap
+
+    def _create_proxy(self):
+        java_port_type_registry: JavaPortTypeRegistry = unittest.mock.create_autospec(
+            JavaPortTypeRegistry
+        )
+        java_port_type_registry.can_decode_port_object.return_value = False
+        java_port_type_registry.can_encode_port_object.return_value = False
+        java_port_type_registry.can_decode_spec.return_value = False
+        java_port_type_registry.can_encode_spec.return_value = False
+
+        registry = knb._PortTypeRegistry("test.extension", java_port_type_registry)
+        proxy = knb._PythonNodeProxy(
+            node=type(self).NodeWithInactiveOutputs(),
+            port_type_registry=registry,
+            knime_parser=None,
+            extension_version="0.0.1",
+        )
+        callback = self.MockJavaCallback()
+        proxy.initializeJavaCallback(callback)
+        return proxy, callback
+
+    def test_configure_with_inactive_outputs_keeps_output_arity(self):
+        proxy, callback = self._create_proxy()
+        try:
+            with self._monkey_patch_java_helpers():
+                outputs = proxy.configure([], self.MockJavaConfigContext())
+        finally:
+            callback.cleanup()
+
+        self.assertEqual(3, len(outputs))
+        self.assertEqual(
+            "org.knime.python3.nodes.ports.PythonBinaryBlobPortObjectSpec",
+            outputs[0].getJavaClassName(),
+        )
+        self.assertEqual(
+            "org.knime.core.node.port.inactive.InactiveBranchPortObjectSpec",
+            outputs[1].getJavaClassName(),
+        )
+        self.assertEqual(
+            "org.knime.python3.nodes.ports.PythonBinaryBlobPortObjectSpec",
+            outputs[2].getJavaClassName(),
+        )
+
+    def test_execute_with_inactive_outputs_keeps_output_arity(self):
+        proxy, callback = self._create_proxy()
+        try:
+            with self._monkey_patch_java_helpers():
+                outputs = proxy.execute([], self.MockJavaExecContext())
+        finally:
+            callback.cleanup()
+
+        self.assertEqual(3, len(outputs))
+        self.assertEqual(
+            "org.knime.python3.nodes.ports.PythonBinaryBlobFileStorePortObject",
+            outputs[0].getJavaClassName(),
+        )
+        self.assertEqual(
+            "org.knime.core.node.port.inactive.InactiveBranchPortObject",
+            outputs[1].getJavaClassName(),
+        )
+        self.assertEqual(
+            "org.knime.python3.nodes.ports.PythonBinaryBlobFileStorePortObject",
+            outputs[2].getJavaClassName(),
+        )
 
 
 class DescriptionParsingTest(unittest.TestCase):

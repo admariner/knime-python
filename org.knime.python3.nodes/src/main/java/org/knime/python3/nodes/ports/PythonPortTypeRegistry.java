@@ -60,6 +60,8 @@ import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
+import org.knime.core.node.port.inactive.InactiveBranchPortObject;
+import org.knime.core.node.port.inactive.InactiveBranchPortObjectSpec;
 import org.knime.core.node.port.image.ImagePortObject;
 import org.knime.core.node.port.image.ImagePortObjectSpec;
 import org.knime.core.node.workflow.capture.WorkflowPortObject;
@@ -67,6 +69,8 @@ import org.knime.core.node.workflow.capture.WorkflowPortObjectSpec;
 import org.knime.credentials.base.CredentialPortObject;
 import org.knime.python3.nodes.ports.PythonPortObjects.PythonPortObject;
 import org.knime.python3.nodes.ports.PythonPortObjects.PythonPortObjectSpec;
+import org.knime.python3.nodes.ports.PythonPortObjects.PythonInactivePortObject;
+import org.knime.python3.nodes.ports.PythonPortObjects.PythonInactivePortObjectSpec;
 import org.knime.python3.nodes.ports.converters.PortObjectConversionContext;
 import org.knime.python3.nodes.ports.converters.PortObjectConverterInterfaces.KnimeToPythonPortObjectConverter;
 import org.knime.python3.nodes.ports.converters.PortObjectConverterInterfaces.PythonPortObjectConverter;
@@ -197,6 +201,10 @@ public final class PythonPortTypeRegistry {
             return null;
         }
 
+        if (spec instanceof InactiveBranchPortObjectSpec) {
+            return PythonInactivePortObjectSpec.INSTANCE;
+        }
+
         var instance = InstanceHolder.INSTANCE;
 
         try {
@@ -238,8 +246,12 @@ public final class PythonPortTypeRegistry {
             return null;
         }
 
-        var instance = InstanceHolder.INSTANCE;
         String specClassName = pythonSpec.getJavaClassName();
+        if (InactiveBranchPortObjectSpec.class.getName().equals(specClassName)) {
+            return InactiveBranchPortObjectSpec.INSTANCE;
+        }
+
+        var instance = InstanceHolder.INSTANCE;
         if (pythonSpec instanceof PythonExtensionPortObjectSpec extensionSpec) {
             try {
                 return instance.m_extensionConverters.convertSpecFromPython(extensionSpec,
@@ -282,6 +294,10 @@ public final class PythonPortTypeRegistry {
         final PortObjectConversionContext context) {
         if (portObject == null) {
             throw new IllegalStateException("Cannot convert `null` portObject from KNIME to Python");
+        }
+
+        if (portObject instanceof InactiveBranchPortObject) {
+            return PythonInactivePortObject.INSTANCE;
         }
 
         var instance = InstanceHolder.INSTANCE;
@@ -341,9 +357,12 @@ public final class PythonPortTypeRegistry {
             throw new IllegalStateException("Cannot convert 'null' portObject from Python to KNIME");
         }
 
-        var instance = InstanceHolder.INSTANCE;
-
         String javaClassName = purePythonPortObject.getJavaClassName();
+        if (InactiveBranchPortObject.class.getName().equals(javaClassName)) {
+            return InactiveBranchPortObject.INSTANCE;
+        }
+
+        var instance = InstanceHolder.INSTANCE;
 
         if (purePythonPortObject instanceof PythonExtensionPortObject extensionPortObject) {
             try {
