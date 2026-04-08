@@ -3,8 +3,8 @@ import { type Ref, nextTick, onMounted, ref, watch } from "vue";
 import * as monaco from "monaco-editor";
 
 import { FunctionButton, type MenuItem } from "@knime/components";
+import { KdsTabBar, type KdsTabBarItem } from "@knime/kds-components";
 import {
-  CompactTabBar,
   type ConsoleHandler,
   type GenericNodeSettings,
   OutputConsole,
@@ -123,9 +123,27 @@ const toSettings = (commonSettings: GenericNodeSettings) => ({
 const hasPreview = initialData.hasPreview;
 type RightPaneTabValue = "workspace" | "preview";
 const rightPaneActiveTab = ref<RightPaneTabValue>("workspace");
-const rightPaneOptions = [
-  { value: "workspace", label: "Temporary Values" },
-  { value: "preview", label: "Output Preview" },
+const rightPaneOptions: KdsTabBarItem[] = [
+  {
+    id: "workspace",
+    value: "workspace",
+    panelId: "workspace",
+    label: "Temporary values",
+    accessory: {
+      type: "icon",
+      name: "code-block",
+    },
+  },
+  {
+    id: "preview",
+    value: "preview",
+    panelId: "preview",
+    label: "Output preview",
+    accessory: {
+      type: "icon",
+      name: "eye",
+    },
+  },
 ];
 
 if (hasPreview) {
@@ -180,12 +198,13 @@ onMounted(async () => {
       </template>
       <template #right-pane>
         <div v-if="hasPreview" id="right-pane">
-          <CompactTabBar
-            ref="rightTabBar"
+          <KdsTabBar
             v-model="rightPaneActiveTab"
-            :possible-values="rightPaneOptions"
+            class="tab-bar"
+            size="small"
+            :tabs="rightPaneOptions"
+            :full-width="true"
             :disabled="false"
-            name="rightTabBar"
           />
           <div id="right-pane-content">
             <PythonWorkspace v-show="rightPaneActiveTab === 'workspace'" />
@@ -227,10 +246,18 @@ onMounted(async () => {
 #right-pane {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   height: 100%;
+  overflow-x: hidden;
 }
 
 #right-pane-content {
   flex-grow: 1;
+}
+
+.tab-bar {
+  margin-top: var(--kds-spacing-container-0-5x);
+  margin-right: var(--kds-spacing-container-0-5x);
+  margin-left: var(--kds-spacing-container-0-5x);
 }
 </style>

@@ -83,7 +83,7 @@ describe("App.vue", () => {
       global: {
         stubs: {
           ...scriptingEditorStub,
-          TabBar: true,
+          KdsTabBar: true,
           OutputConsole: true,
           PythonEditorControls: true,
         },
@@ -109,7 +109,7 @@ describe("App.vue", () => {
 
   describe("right panel", () => {
     const findComponents = (wrapper: VueWrapper) => {
-      const tabbar = wrapper.findComponent({ ref: "rightTabBar" });
+      const tabbar = wrapper.findComponent({ name: "KdsTabBar" });
       const workspace = wrapper.findComponent({ name: "PythonWorkspace" });
       const preview = wrapper.findComponent({ name: "PythonViewPreview" });
       return { tabbar, workspace, preview };
