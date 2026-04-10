@@ -56,6 +56,7 @@ import org.knime.core.data.image.png.PNGImageContent;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.port.image.ImagePortObject;
 import org.knime.core.node.port.image.ImagePortObjectSpec;
+import org.knime.core.node.port.inactive.InactiveBranchPortObject;
 import org.knime.core.node.workflow.capture.WorkflowPortObject;
 import org.knime.python3.arrow.PythonArrowDataSink;
 import org.knime.python3.nodes.ports.PythonBinaryBlobFileStorePortObject;
@@ -68,6 +69,7 @@ import org.knime.python3.nodes.ports.PythonPortObjects.PythonBinaryPortObjectSpe
 import org.knime.python3.nodes.ports.PythonPortObjects.PythonConnectionPortObject;
 import org.knime.python3.nodes.ports.PythonPortObjects.PythonConnectionPortObjectSpec;
 import org.knime.python3.nodes.ports.PythonPortObjects.PythonImagePortObject;
+import org.knime.python3.nodes.ports.PythonPortObjects.PythonPortObject;
 import org.knime.python3.nodes.ports.PythonPortObjects.PythonTablePortObject;
 import org.knime.python3.nodes.ports.PythonTransientConnectionPortObject;
 import org.knime.python3.nodes.ports.PythonWorkflowPortObject;
@@ -215,6 +217,20 @@ public final class PortObjectConverters {
         public WorkflowPortObject fromPython(final PythonWorkflowPortObject purePythonPortObject,
             final PortObjectConversionContext context) {
             return purePythonPortObject.getWorkflow();
+        }
+    }
+
+    /**
+     * Bi-directional Port Object converter for {@link InactiveBranchPortObject}.
+     */
+    public static final class InactiveBranchPortObjectConverter
+        implements PythonToKnimePortObjectConverter<PythonPortObject, InactiveBranchPortObject> {
+
+
+        @Override
+        public InactiveBranchPortObject fromPython(final PythonPortObject purePythonPortObject,
+            final PortObjectConversionContext context) {
+            return InactiveBranchPortObject.INSTANCE;
         }
     }
 

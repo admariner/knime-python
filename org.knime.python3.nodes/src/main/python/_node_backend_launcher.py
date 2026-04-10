@@ -625,8 +625,6 @@ class _PortTypeRegistry:
         if spec is None:
             return None
         class_name = spec.getJavaClassName()
-        if class_name == _inactive_branch_port_object_spec_java_type:
-            return kn.InactivePort
         if self._extension_port_type_registry.can_decode_spec(class_name):
             return self._extension_port_type_registry.decode_spec(
                 spec,
@@ -794,8 +792,6 @@ class _PortTypeRegistry:
         self, port_object: _PythonPortObject, port: kn.Port, java_callback
     ):
         class_name = port_object.getJavaClassName()
-        if class_name == _inactive_branch_port_object_java_type:
-            return kn.InactivePort
 
         if self._extension_port_type_registry.can_decode_port_object(class_name):
             return self._extension_port_type_registry.decode_port_object(port_object)

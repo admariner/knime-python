@@ -52,6 +52,7 @@ import org.knime.base.data.xml.SvgCell;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.image.png.PNGImageContent;
 import org.knime.core.node.port.image.ImagePortObjectSpec;
+import org.knime.core.node.port.inactive.InactiveBranchPortObjectSpec;
 import org.knime.core.node.workflow.capture.WorkflowPortObjectSpec;
 import org.knime.core.table.virtual.serialization.AnnotatedColumnarSchemaSerializer;
 import org.knime.python3.arrow.PythonArrowDataUtils;
@@ -212,6 +213,18 @@ public final class PortObjectSpecConverters {
         @Override
         public PythonWorkflowPortObjectSpec toPython(final WorkflowPortObjectSpec spec) {
             return new PythonWorkflowPortObjectSpec(spec);
+        }
+    }
+
+    /**
+     * Bi-directional Port Object Spec converter for {@link InactiveBranchPortObjectSpec}.
+     */
+    public static final class InactiveBranchPortObjectSpecConverter
+        implements PythonToKnimePortObjectSpecConverter<InactiveBranchPortObjectSpec> {
+
+        @Override
+        public InactiveBranchPortObjectSpec fromJsonString(final String jsonData) {
+            return InactiveBranchPortObjectSpec.INSTANCE;
         }
     }
 

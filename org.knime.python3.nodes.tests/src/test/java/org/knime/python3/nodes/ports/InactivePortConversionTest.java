@@ -60,26 +60,12 @@ import org.knime.python3.nodes.ports.converters.PortObjectConversionContext;
 public class InactivePortConversionTest {
 
     @Test
-    public void testConvertInactiveSpecToPython() {
-        var converted = PythonPortTypeRegistry.convertPortObjectSpecToPython(InactiveBranchPortObjectSpec.INSTANCE);
-
-        assertSame(PythonInactivePortObjectSpec.INSTANCE, converted);
-    }
-
-    @Test
     public void testConvertInactiveSpecFromPython() {
         var converted = PythonPortTypeRegistry.convertPortObjectSpecFromPython(PythonInactivePortObjectSpec.INSTANCE);
 
         assertSame(InactiveBranchPortObjectSpec.INSTANCE, converted);
     }
 
-    @Test
-    public void testConvertInactiveObjectToPython() {
-        var converted = PythonPortTypeRegistry.convertPortObjectToPython(InactiveBranchPortObject.INSTANCE,
-            new PortObjectConversionContext(null, null, null));
-
-        assertSame(PythonInactivePortObject.INSTANCE, converted);
-    }
 
     @Test
     public void testConvertInactiveObjectFromPython() {

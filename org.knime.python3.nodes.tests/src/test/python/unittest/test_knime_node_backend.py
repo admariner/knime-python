@@ -446,16 +446,6 @@ class PortTypeRegistryTest(unittest.TestCase):
             pypos.getJavaClassName(),
         )
 
-    def test_inactive_spec_to_python(self):
-        port = knext.Port(knext.PortType.TABLE, "Test port", "Test port")
-        java_spec = knb._PythonPortObjectSpec(
-            "org.knime.core.node.port.inactive.InactiveBranchPortObjectSpec", {}
-        )
-        self.assertIs(
-            knext.InactivePort,
-            self.registry.spec_to_python(java_spec, port, callback_mock),
-        )
-
     def test_inactive_object_from_python(self):
         port = knext.Port(knext.PortType.TABLE, "Test port", "Test port")
         out = self.registry.port_object_from_python(
@@ -464,18 +454,6 @@ class PortTypeRegistryTest(unittest.TestCase):
         self.assertEqual(
             "org.knime.core.node.port.inactive.InactiveBranchPortObject",
             out.getJavaClassName(),
-        )
-
-    def test_inactive_object_to_python(self):
-        port = knext.Port(knext.PortType.TABLE, "Test port", "Test port")
-        java_obj = self.MockFromJavaObject(
-            spec=None,
-            file_path="unused",
-            class_name="org.knime.core.node.port.inactive.InactiveBranchPortObject",
-        )
-        self.assertIs(
-            knext.InactivePort,
-            self.registry.port_object_to_python(java_obj, port, callback_mock),
         )
 
 
