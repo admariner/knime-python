@@ -48,14 +48,14 @@
  */
 package org.knime.python3.nodes.settings;
 
-import static org.knime.core.webui.node.dialog.defaultdialog.jsonforms.JsonNodeSettingsMapperUtil.getNestedJsonObject;
+import static org.knime.core.webui.node.dialog.defaultdialog.util.serialize.JsonNodeSettingsMapperUtil.getNestedJsonObject;
 
 import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModel;
 import org.knime.core.webui.node.dialog.SettingsType;
-import org.knime.core.webui.node.dialog.defaultdialog.jsonforms.JsonNodeSettingsMapperUtil;
+import org.knime.core.webui.node.dialog.defaultdialog.util.serialize.JsonNodeSettingsMapperUtil;
 
 /**
  * Represents node settings that are created as JSON and stored as NodeSettings.</br>

@@ -57,7 +57,7 @@ import org.knime.core.webui.node.dialog.NodeAndVariableSettingsRO;
 import org.knime.core.webui.node.dialog.NodeAndVariableSettingsWO;
 import org.knime.core.webui.node.dialog.SettingsType;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultKaiNodeInterface;
-import org.knime.core.webui.node.dialog.defaultdialog.jsonforms.JsonNodeSettingsMapperUtil;
+import org.knime.core.webui.node.dialog.defaultdialog.util.serialize.JsonNodeSettingsMapperUtil;
 import org.knime.core.webui.node.dialog.kai.KaiNodeInterface;
 import org.knime.python3.nodes.proxy.NodeDialogProxy;
 import org.knime.python3.nodes.settings.JsonNodeSettingsSchema;

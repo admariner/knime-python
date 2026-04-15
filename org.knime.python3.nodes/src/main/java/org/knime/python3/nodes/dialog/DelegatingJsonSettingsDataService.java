@@ -59,10 +59,9 @@ import org.knime.core.webui.node.dialog.NodeAndVariableSettingsRO;
 import org.knime.core.webui.node.dialog.NodeAndVariableSettingsWO;
 import org.knime.core.webui.node.dialog.NodeSettingsService;
 import org.knime.core.webui.node.dialog.SettingsType;
-import org.knime.core.webui.node.dialog.defaultdialog.dataservice.DefaultDialogDataConverter;
-import org.knime.core.webui.node.dialog.defaultdialog.jsonforms.JsonFormsConsts;
-import org.knime.core.webui.node.dialog.defaultdialog.jsonforms.JsonFormsDataUtil;
-import org.knime.core.webui.node.dialog.defaultdialog.jsonforms.JsonNodeSettingsMapperUtil;
+import org.knime.core.webui.node.dialog.defaultdialog.dataservice.flowvariable.DefaultDialogDataConverter;
+import org.knime.core.webui.node.dialog.defaultdialog.util.serialize.JsonNodeSettingsMapperUtil;
+import org.knime.core.webui.node.dialog.defaultdialog.util.serialize.NodeParametersSerializationUtil;
 import org.knime.node.parameters.NodeParametersInput;
 import org.knime.python3.nodes.proxy.NodeDialogProxy;
 import org.knime.python3.nodes.settings.JsonNodeSettingsSchema;
@@ -118,7 +117,7 @@ public final class DelegatingJsonSettingsDataService implements NodeSettingsServ
         final Map<SettingsType, NodeAndVariableSettingsRO> previousSettings,
         final Map<SettingsType, NodeAndVariableSettingsWO> settings) {
         // the jsonSettings received from the frontend are wrapped into a 'data' object
-        var unwrapped = JsonNodeSettingsMapperUtil.getNestedJsonObject(jsonSettings, JsonFormsConsts.FIELD_NAME_DATA);
+        var unwrapped = JsonNodeSettingsMapperUtil.getNestedJsonObject(jsonSettings, "data");
         m_lastSettingsSchema.createFromJson(unwrapped).saveTo(settings.get(SettingsType.MODEL));
     }
 
@@ -137,7 +136,7 @@ public final class DelegatingJsonSettingsDataService implements NodeSettingsServ
         var params = jsonSettings.getParameters();
 
         try {
-            return JsonFormsDataUtil.getMapper().readTree(params);
+            return NodeParametersSerializationUtil.getMapper().readTree(params);
         } catch (JsonProcessingException ex) {
             // NB: This cannot happen because params is valid JSON
             throw new IllegalStateException("failed to parse json parameters", ex);
