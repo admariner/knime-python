@@ -260,4 +260,9 @@ onMounted(async () => {
   margin-right: var(--kds-spacing-container-0-5x);
   margin-left: var(--kds-spacing-container-0-5x);
 }
+
+.console {
+  margin-top: var(--kds-spacing-container-0-5x);
+  margin-left: var(--kds-spacing-container-0-5x);
+}
 </style>
