@@ -221,7 +221,7 @@ public final class PortObjectConverters {
     }
 
     /**
-     * Bi-directional Port Object converter for {@link InactiveBranchPortObject}.
+     * Port Object converter for {@link InactiveBranchPortObject}.
      */
     public static final class InactiveBranchPortObjectConverter
         implements PythonToKnimePortObjectConverter<PythonPortObject, InactiveBranchPortObject> {
